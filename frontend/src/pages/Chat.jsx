@@ -24,7 +24,8 @@ export default function Chat() {
   }, [messages]);
 
   useEffect(() => {
-    const newSocket = io('/', { path: '/socket.io' });
+    const socketUrl = import.meta.env.VITE_API_BASE_URL || '/';
+    const newSocket = io(socketUrl, { path: '/socket.io' });
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
