@@ -20,15 +20,74 @@ class OTPVerify(BaseModel):
     email: str
     otp_code: str
 
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
 def send_otp_to_user(email: str, otp_code: str):
     """
-    Placeholder function for sending OTP via email.
-    Prints to console with high visibility.
+    Sends the OTP code to the user via SMTP.
+    Configured via environment variables.
     """
-    print("\n" + "="*50)
-    print(f" SECURITY ALERT: OTP GENERATED FOR {email} ")
-    print(f" YOUR CODE IS: {otp_code} ")
-    print("="*50 + "\n")
+    # Get SMTP settings from environment
+    smtp_host = os.environ.get("EMAIL_HOST", "smtp.gmail.com")
+    smtp_port = int(os.environ.get("EMAIL_PORT", 587))
+    smtp_user = os.environ.get("EMAIL_USER")
+    smtp_pass = os.environ.get("EMAIL_PASSWORD")
+
+    if not smtp_user or not smtp_pass:
+        print("\n" + "!"*50)
+        print(" WARNING: EMAIL CREDENTIALS NOT SET ")
+        print(f" OTP FOR {email}: {otp_code} ")
+        print("!"*50 + "\n")
+        return
+
+    try:
+        # Create the email
+        msg = MIMEMultipart()
+        msg['From'] = f"AIRS Security <{smtp_user}>"
+        msg['To'] = email
+        msg['Subject'] = f"[{otp_code}] Your AIRS Security Access Code"
+
+        # Professional "Cyber" Body
+        body = f"""
+        <html>
+        <body style="background-color: #0a192f; color: #ccd6f6; font-family: 'Courier New', Courier, monospace; padding: 40px; border: 1px solid #64ffda;">
+            <div style="text-align: center; border-bottom: 1px solid #112240; padding-bottom: 20px; margin-bottom: 20px;">
+                <h1 style="color: #64ffda; letter-spacing: 5px;">AIRS SHIELD</h1>
+                <p style="font-size: 10px; text-transform: uppercase;">Autonomous Incident Response System</p>
+            </div>
+            
+            <p>A secure login attempt was initiated for your account.</p>
+            
+            <div style="background-color: #112240; padding: 30px; border-radius: 10px; text-align: center; margin: 30px 0;">
+                <p style="font-size: 12px; text-transform: uppercase; margin-bottom: 10px; opacity: 0.7;">Your Verification Code:</p>
+                <h2 style="font-size: 42px; color: #64ffda; margin: 0; letter-spacing: 10px;">{otp_code}</h2>
+            </div>
+            
+            <p style="font-size: 12px; color: #8892b0;">This code will expire in 15 minutes. If you did not request this code, please ignore this email or contact the SOC team.</p>
+            
+            <div style="margin-top: 40px; border-top: 1px solid #112240; padding-top: 20px; font-size: 10px; opacity: 0.5;">
+                <p>SESSION_ID: {os.urandom(8).hex().upper()}</p>
+                <p>STATUS: ENCRYPTED_TRANSMISSION_ACTIVE</p>
+            </div>
+        </body>
+        </html>
+        """
+        msg.attach(MIMEText(body, 'html'))
+
+        # Send the email
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_pass)
+            server.send_message(msg)
+            
+        print(f"--- SUCCESS: OTP Email sent to {email} ---")
+        
+    except Exception as e:
+        print(f"--- FAILED: Could not send email: {str(e)} ---")
+        # Fallback to console so user isn't locked out
+        print(f" FALLBACK OTP FOR {email}: {otp_code} ")
 
 @router.post("/register")
 def register(user: UserCreate, db: Session = Depends(database.get_db)):
