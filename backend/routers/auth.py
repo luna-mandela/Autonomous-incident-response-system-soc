@@ -86,8 +86,8 @@ def verify_otp(otp_data: OTPVerify, response: Response, db: Session = Depends(da
         key="access_token",
         value=f"Bearer {access_token}",
         httponly=True,
-        secure=False,
-        samesite="lax",
+        secure=True,
+        samesite="none",
         max_age=security.ACCESS_TOKEN_EXPIRE_MINUTES * 60
     )
     
@@ -95,5 +95,9 @@ def verify_otp(otp_data: OTPVerify, response: Response, db: Session = Depends(da
 
 @router.post("/logout")
 def logout(response: Response):
-    response.delete_cookie("access_token")
+    response.delete_cookie(
+        "access_token", 
+        secure=True, 
+        samesite="none"
+    )
     return {"msg": "Logged out"}
