@@ -26,14 +26,14 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # WAF/CORS Configuration
-# NOTE: allow_origins=["*"] + allow_credentials=True is an invalid CORS combination.
-# Browsers will reject it. Use an explicit origin list instead.
+frontend_url = os.getenv("FRONTEND_URL", "https://autonomous-incident-response-system.vercel.app")
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:5173", 
         "http://127.0.0.1:5173",
-        "https://autonomous-incident-response-system-five.vercel.app",
+        frontend_url,
     ],
     allow_credentials=True,
     allow_methods=["*"],
