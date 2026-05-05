@@ -27,14 +27,19 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # WAF/CORS Configuration
 frontend_url = os.getenv("FRONTEND_URL", "https://autonomous-incident-response-system.vercel.app")
+print(f"DEBUG: FRONTEND_URL is set to: {frontend_url}")
+
+# Ensure we handle the URL with and without trailing slash
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    frontend_url.rstrip("/"),
+    frontend_url.rstrip("/") + "/",
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173", 
-        "http://127.0.0.1:5173",
-        frontend_url,
-    ],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
